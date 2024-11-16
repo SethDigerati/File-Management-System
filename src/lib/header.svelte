@@ -29,7 +29,7 @@
 >
   <div>
     <button
-      class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      class="bg-blue-500 hover:bg-blue-700 text-white text-sm md:text-base font-bold py-2 px-2 md:px-4 rounded"
       on:click={handleNewFolder}
     >
       New folder
@@ -37,7 +37,7 @@
   </div>
   <div>
     <button
-      class="bg-purple-500 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded"
+      class="bg-purple-500 hover:bg-purple-700 text-white text-sm md:text-base  font-bold py-2 px-2 md:px-4 rounded"
       on:click={handleNewFile}
     >
       New file
@@ -45,7 +45,7 @@
   </div>
 <div class:hidden={path.length  == 1}>
     <button
-        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded "
+        class="bg-red-500 hover:bg-red-700 text-white text-sm md:text-base  font-bold py-2 px-2 md:px-4 rounded "
         on:click={handleBack}
     >
         Back
@@ -54,7 +54,7 @@
  
   <div>
     <button
-      class="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded"
+      class="bg-gray-500 hover:bg-gray-700 text-white text-sm md:text-base  font-bold py-2 px-2 md:px-4 rounded"
       on:click={handleSearch}
     >
       Search
