@@ -1,6 +1,6 @@
 <script>
   import { DB } from '../db.js';
-  let { filePath = "", close = () => {} } = $props();
+  let { filePath = "", item = {}, close = () => {} } = $props();
   let content = $state("");
   let saved = $state(true);
 
@@ -11,6 +11,11 @@
   });
 
   function saveContent() {
+    if(item.permission === "r"){
+      alert("You don't have permission to edit this file");
+      return;
+    }
+
     DB.set(filePath, content); // Save content to DB
     saved = true; // Update the saved state
   }
@@ -24,8 +29,11 @@
 <!-- Editor Modal -->
 {#if filePath}
   <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-    <div class="bg-white p-6 w-6/12 h-4/6 p-2">
-      <h2 class="text-xl font-semibold mb-4">Edit File: {filePath}</h2>
+    <div class="bg-gray-600 p-6 w-6/12 h-5/6 rounded-2xl">
+      <div class="card-header flex justify-between">
+      <h2 class="text-xl font-semibold mb-4 text-white">Edit File: {filePath}</h2>
+      <span>permision: {item.permission}</span>
+    </div>
       <textarea 
         bind:value={content} 
         class="w-full h-5/6 border border-gray-300 p-2"

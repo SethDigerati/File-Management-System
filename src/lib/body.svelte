@@ -5,14 +5,20 @@
   import Item from "./item.svelte";
 
   // Props: tree (for rendering), and path (to know where we are)
-  let { tree, path = [] , updated} = $props();
+  let { tree, path = [], updated } = $props();
 
-
-  let currentEditing = $state("");
+  let currentEditing = $state({ filepath: "", item: {} });
 
   // Function to fetch the entire tree from the DB
   function fetchTreeFromDB() {
-    return DB.get("fileTree") || { name: "root", children: [], files: [] };
+    return (
+      DB.get("fileTree") || {
+        name: "root",
+        permission: "rw",
+        children: [],
+        files: [],
+      }
+    );
   }
 
   // Helper function to locate the current directory in the DB tree based on the path
@@ -22,7 +28,7 @@
       currentDir = currentDir.children.find(
         (folder) => folder.name === path[i]
       );
-      console.log(path[i], currentDir);
+
       if (!currentDir) {
         break; // If the path is invalid, return the root
       }
@@ -37,7 +43,6 @@
     updated();
   }
 
- 
   // Function to delete an item (file or folder) in the current directory in the DB
   function deleteItem(item, isFile) {
     let dbTree = fetchTreeFromDB(); // Fetch the complete tree from the DB
@@ -48,11 +53,26 @@
       ? currentDir.files.findIndex((f) => f.name === item.name)
       : currentDir.children.findIndex((f) => f.name === item.name);
 
+    if (
+      !confirm(
+        `Are you sure you want to delete this ${isFile ? "file" : "folder"}?`
+      )
+    ) {
+      return;
+    }
 
     if (index > -1) {
       if (isFile) {
+        if (currentDir.files[index].permission === "r") {
+          alert("You don't have permission to delete this file");
+          return;
+        }
         currentDir.files.splice(index, 1);
       } else {
+        if (currentDir.children[index].permission === "r") {
+          alert("You don't have permission to delete this folder");
+          return;
+        }
         currentDir.children.splice(index, 1);
       }
 
@@ -62,74 +82,73 @@
     }
   }
 
+  // Function to rename an item (file or folder) in the DB
+  function renameItem(item, isFile) {
+    const newName = prompt("Enter new name:", item.name).trim();
+    if (!newName) return;
 
-// Function to rename an item (file or folder) in the DB
-function renameItem(item, isFile) {
-  const newName = prompt("Enter new name:", item.name).trim();
-  if (!newName) return;
-
-  let dbTree = fetchTreeFromDB(); // Fetch the complete tree from the DB
-  let currentDir = findCurrentDirInDBTree(dbTree); // Find the current directory in the DB tree
-
-  // Check for duplicate names in the current directory
-  const isDuplicate = currentDir.children.some((folder) => folder.name === newName) ||
-    currentDir.files.some((file) => file.name === newName);
-
-  if (!isDuplicate) {
-    // Find and update the item by comparing using 'name' or 'id'
-    const updateItem = isFile 
-      ? currentDir.files.find((file) => file.name === item.name) 
-      : currentDir.children.find((folder) => folder.name === item.name);
-    
-    if (updateItem) {
-      updateItem.name = newName; // Update the name of the item
-    }
-
-
-    saveTreeToDB(dbTree, currentDir); // Save the updated DB tree back
-  } else {
-    alert("An item with this name already exists.");
-  }
-}
-
-// Function to handle permissions change in the DB
-function changePermissions(item, isFile) {
-  const newPermissions = prompt(`Set new permissions for ${item.name}:`);
-  if (newPermissions) {
     let dbTree = fetchTreeFromDB(); // Fetch the complete tree from the DB
     let currentDir = findCurrentDirInDBTree(dbTree); // Find the current directory in the DB tree
 
-    // Find the item to update by comparing its name
-    const updateItem = isFile 
-      ? currentDir.files.find((file) => file.name === item.name)
-      : currentDir.children.find((folder) => folder.name === item.name);
-    
-    if (updateItem) {
-      updateItem.permissions = newPermissions; // Update permissions for the item
+    // Check for duplicate names in the current directory
+    const isDuplicate =
+      currentDir.children.some((folder) => folder.name === newName) ||
+      currentDir.files.some((file) => file.name === newName);
+
+    if (!isDuplicate) {
+      // Find and update the item by comparing using 'name' or 'id'
+      const updateItem = isFile
+        ? currentDir.files.find((file) => file.name === item.name)
+        : currentDir.children.find((folder) => folder.name === item.name);
+
+      if (updateItem) {
+        updateItem.name = newName; // Update the name of the item
+      }
+
       saveTreeToDB(dbTree, currentDir); // Save the updated DB tree back
+    } else {
+      alert("An item with this name already exists.");
     }
   }
-}
 
+  // Function to handle permissions change in the DB
+  function changePermissions(item, isFile) {
+    const newPermissions = prompt(
+      `Set new permissions for ${item.name}: rw, r, or w`
+    ).trim();
+    if (newPermissions) {
+      let dbTree = fetchTreeFromDB(); // Fetch the complete tree from the DB
+      let currentDir = findCurrentDirInDBTree(dbTree); // Find the current directory in the DB tree
+
+      // Find the item to update by comparing its name
+      const updateItem = isFile
+        ? currentDir.files.find((file) => file.name === item.name)
+        : currentDir.children.find((folder) => folder.name === item.name);
+
+      if (updateItem) {
+        updateItem.permission = newPermissions; // Update permissions for the item
+        saveTreeToDB(dbTree, currentDir); // Save the updated DB tree back
+      }
+    }
+  }
 
   // Function to handle click on folder to navigate into it
   function handleClicked(item, isFile) {
     if (!isFile) {
       path.push(item.name); // Navigate deeper into the directory
-    }else{
-        let filepath = path.join('/') + '/' + item.name;
-        currentEditing = filepath;
-        console.log(currentEditing);
+    } else {
+      let filepath = path.join("/") + "/" + item.name;
+      currentEditing = { filepath, item };
     }
   }
 
-  function closeEditor(){
+  function closeEditor() {
     currentEditing = "";
   }
 </script>
 
-{#if currentEditing !== ""}
-<Editor filePath={currentEditing} close={closeEditor} />
+{#if Object.keys(currentEditing).length > 0 && currentEditing.filepath}
+  <Editor filePath={currentEditing.filepath} item={currentEditing.item} close={closeEditor} />
 {/if}
 
 

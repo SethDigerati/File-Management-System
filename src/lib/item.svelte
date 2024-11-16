@@ -34,8 +34,7 @@
   }
 
 </script>
-
-<div class="relative">
+<div class="relative"></div>
   <div class="flex items-center p-4 bg-gray-700 rounded-lg hover:bg-gray-600" ondblclick={()=>{clicked(item, isFile)}} >
     {#if isFile}
       <FileIcon class="w-10 h-10 text-white mr-2" />
@@ -43,6 +42,7 @@
       <FolderIcon class="w-10 h-10 text-white mr-2" />
     {/if}
     <span class="text-white flex-1">{item.name}</span>
+    <span class="text-gray-400 mr-2">Permission: {item.permission}</span>
     <button onfocus={toggleDropdown} onfocusout={toggleDropdown} class="text-white">
       <EllipsisIcon class="w-6 h-6" />
     </button>
@@ -50,4 +50,3 @@
       <Dropdown options={dropdownOptions} on:optionSelect={handleOptionSelect} />
     </div>
   </div>
-</div>
